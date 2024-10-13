@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Superhero Database</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 10px; border: 1px solid #ccc; text-align: left; }
+        th { cursor: pointer; background-color: #f2f2f2; }
+        th:hover { background-color: #ddd; }
+    </style>
+</head>
+<body>
+
+<h1>Superhero Database</h1>
+<label for="pageSize">Page Size:</label>
+<select id="pageSize">
+    <option value="10">10</option>
+    <option value="20" selected>20</option>
+    <option value="50">50</option>
+    <option value="100">100</option>
+    <option value="all">All</option>
+</select>
+
+<input type="text" id="search" placeholder="Search by name...">
+
+<table id="heroTable">
+    <thead>
+        <tr>
+            <th onclick="sortTable('icon')">Icon</th>
+            <th onclick="sortTable('name')">Name</th>
+            <th onclick="sortTable('fullName')">Full Name</th>
+            <th onclick="sortTable('powerstats')">Powerstats</th>
+            <th onclick="sortTable('race')">Race</th>
+            <th onclick="sortTable('gender')">Gender</th>
+            <th onclick="sortTable('height')">Height</th>
+            <th onclick="sortTable('weight')">Weight</th>
+            <th onclick="sortTable('placeOfBirth')">Place Of Birth</th>
+            <th onclick="sortTable('alignment')">Alignment</th>
+        </tr>
+    </thead>
+    <tbody id="heroBody"></tbody>
+</table>
+
+<script>
+// Fetch data from the API
+fetch('https://rawcdn.githack.com/akabab/superhero-api/0.2.0/api/all.json')
+    .then(response => response.json())
+    .then(loadData);
+
+// Load data into the table
+function loadData(heroes) {
+    window.heroes = heroes;
+    displayHeroes(heroes);
+}
+
+// Display heroes in the table
+function displayHeroes(heroes) {
+    const heroBody = document.getElementById('heroBody');
+    heroBody.innerHTML = '';
+    
+    const pageSize = document.getElementById('pageSize').value;
+    const filteredHeroes = heroes.filter(hero => {
+        const searchTerm = document.getElementById('search').value.toLowerCase();
+        return hero.name.toLowerCase().includes(searchTerm);
+    });
+
+    const totalHeroes = pageSize === 'all' ? filteredHeroes : filteredHeroes.slice(0, pageSize);
+
+    totalHeroes.forEach(hero => {
+        const row = `<tr>
+            <td><img src="${hero.images.xs}" alt="${hero.name}"></td>
+            <td>${hero.name}</td>
+            <td>${hero.biography.fullName}</td>
+            <td>${JSON.stringify(hero.powerstats)}</td>
+            <td>${hero.appearance.race}</td>
+            <td>${hero.appearance.gender}</td>
+            <td>${hero.appearance.height.join(', ')}</td>
+            <td>${hero.appearance.weight.join(', ')}</td>
+            <td>${hero.biography.placeOfBirth}</td>
+            <td>${hero.biography.alignment}</td>
+        </tr>`;
+        heroBody.innerHTML += row;
+    });
+}
+
+// Sort table by column
+let sortDirection = true;
+function sortTable(column) {
+    window.heroes.sort((a, b) => {
+        let valA = a[column] || '';
+        let valB = b[column] || '';
+
+        if (column === 'powerstats') {
+            valA = JSON.stringify(a.powerstats);
+            valB = JSON.stringify(b.powerstats);
+        }
+
+        if (typeof valA === 'string' && typeof valB === 'string') {
+            return sortDirection ? valA.localeCompare(valB) : valB.localeCompare(valA);
+        } else {
+            return sortDirection ? valA - valB : valB - valA;
+        }
+    });
+    
+    sortDirection = !sortDirection;
+    displayHeroes(window.heroes);
+}
+
+// Event listeners for pagination and search
+document.getElementById('pageSize').addEventListener('change', () => displayHeroes(window.heroes));
+document.getElementById('search').addEventListener('input', () => displayHeroes(window.heroes));
+
+</script>
+
+</body>
+</html>
+
